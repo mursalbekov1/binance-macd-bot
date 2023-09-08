@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
-func GetUpdates(botUrl string) ([]models.Update, error) {
-	resp, err := http.Get(botUrl + "/getUpdates")
+func GetUpdates(botUrl string, offset int) ([]models.Update, error) {
+	resp, err := http.Get(botUrl + "/getUpdates" + "?offset=" + strconv.Itoa(offset))
 	if err != nil {
 		return nil, err
 	}
