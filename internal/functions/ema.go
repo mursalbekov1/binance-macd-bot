@@ -1,4 +1,4 @@
-package macd
+package functions
 
 func CalculateEMA(data []float64, period int) []float64 {
 	ema := make([]float64, len(data))

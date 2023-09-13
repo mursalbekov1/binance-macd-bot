@@ -1,7 +1,7 @@
 package main
 
 import (
-	"binance_tg/internal/macd"
+	"binance_tg/internal/functions"
 	"context"
 	"fmt"
 	"github.com/adshao/go-binance/v2"
@@ -49,13 +49,17 @@ func main() {
 		signalPeriod := 9
 
 		// Вычисляем MACD и сигнальную линию
-		macd, _ := macd.CalculateMACD(prices, shortPeriod, longPeriod, signalPeriod)
+		macd, _ := functions.CalculateMACD(prices, shortPeriod, longPeriod, signalPeriod)
+
+		signalLine := functions.CalculateSignalLine(macd, signalPeriod)
 
 		// Выводим последний результат MACD
-		fmt.Println("Last MACD:", macd[len(macd)-1])
-
+		//fmt.Println("MACD line:", macd[len(macd)-1])
+		//fmt.Println("Signal line:", signalLine[len(signalLine)-1])
+		fmt.Println("Histogram:", macd[len(macd)-1]-signalLine[len(signalLine)-1])
+		fmt.Println("Time: ", time.Now().Format("15:04:05.000"))
 		// Задержка в 3 секунды перед следующим запросом
-		time.Sleep(3 * time.Second)
+		//time.Sleep(3 * time.Second)
 	}
 
 	//https://api.telegram.org/bot<token>/METHOD_NAME

@@ -1,4 +1,4 @@
-package macd
+package functions
 
 func CalculateMACD(data []float64, shortPeriod, longPeriod, signalPeriod int) ([]float64, []float64) {
 	shortEMA := CalculateEMA(data, shortPeriod)
