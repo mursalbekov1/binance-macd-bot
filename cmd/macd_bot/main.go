@@ -49,17 +49,15 @@ func main() {
 		signalPeriod := 9
 
 		// Вычисляем MACD и сигнальную линию
-		macd, _ := functions.CalculateMACD(prices, shortPeriod, longPeriod, signalPeriod)
-
-		signalLine := functions.CalculateSignalLine(macd, signalPeriod)
+		macd, signalLine := functions.CalculateMACD(prices, shortPeriod, longPeriod, signalPeriod)
 
 		// Выводим последний результат MACD
 		//fmt.Println("MACD line:", macd[len(macd)-1])
 		//fmt.Println("Signal line:", signalLine[len(signalLine)-1])
-		fmt.Println("Histogram:", macd[len(macd)-1]-signalLine[len(signalLine)-1])
+		fmt.Println("Histogram1:", macd[len(macd)-1]-signalLine[len(signalLine)-1])
 		fmt.Println("Time: ", time.Now().Format("15:04:05.000"))
 		// Задержка в 3 секунды перед следующим запросом
-		//time.Sleep(3 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 
 	//https://api.telegram.org/bot<token>/METHOD_NAME
