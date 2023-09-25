@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	apiKey    = "DQbMjZ54eTkw7pHIxYYW1UUFWNADxaETaE79C6Ad0VH69QImdQqVLE9rpJ6ZFc28"
-	secretKey = "Mdiyex2E6kiQf2jmOSjrXKsTbqTb4SdURt3LqumbqZi3OdNSUhP3I0NTi8dHdBDG"
+	apiKey    = ""
+	secretKey = ""
 	client    = binance.NewClient(apiKey, secretKey)
 	symbol    = "BTCUSDT"
 	interval  = "1s"
