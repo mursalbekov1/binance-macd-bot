@@ -13,7 +13,7 @@ import (
 
 var (
 	apiKey    = ""
-	secretKey = ""
+	secretKey = " "
 	client    = binance.NewClient(apiKey, secretKey)
 	symbol    = "BTCUSDT"
 	interval  = "1s"
