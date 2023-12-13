@@ -1,7 +1,7 @@
-package api
+package binance
 
 import (
-	"binance_tg/internal/models"
+	"binance_tg/models"
 	"bytes"
 	"encoding/json"
 	"github.com/adshao/go-binance/v2"
@@ -13,7 +13,7 @@ import (
 
 var (
 	apiKey    = ""
-	secretKey = " "
+	secretKey = ""
 	client    = binance.NewClient(apiKey, secretKey)
 	symbol    = "BTCUSDT"
 	interval  = "1s"
@@ -24,7 +24,11 @@ var (
 func Respond(botUrl string, update models.Update) error {
 	var botMessage models.BotMessage
 	botMessage.ChatId = update.Message.Chat.ChatId
-	if update.Message.Text == "/start" {
+
+	switch update.Message.Text {
+	case "/start":
+		botMessage.Text = "Привет! Этот бот будет оповещать тебя, когда значение MACD изменится."
+	case "/macd":
 		if isRunning {
 			botMessage.Text = "MACD уже запущено."
 		} else {
@@ -32,15 +36,15 @@ func Respond(botUrl string, update models.Update) error {
 			isRunning = true
 			go GetMACDLoop(botUrl, int64(botMessage.ChatId)) // Запускаем GetMACD в отдельной горутине
 		}
-	} else if update.Message.Text == "/stop" {
+	case "/stop":
 		if isRunning {
 			botMessage.Text = "MACD остановлено."
 			isRunning = false
 		} else {
 			botMessage.Text = "MACD уже остановлено."
 		}
-	} else {
-		botMessage.Text = "Неизвестная команда."
+	default:
+		botMessage.Text = "Неизвестная команда"
 	}
 
 	buf, err := json.Marshal(botMessage)
@@ -61,14 +65,15 @@ func GetMACDLoop(botUrl string, chatID int64) {
 		if macdValue > 0 {
 			botMessage = models.BotMessage{
 				ChatId: int(chatID),
-				Text:   strconv.FormatFloat(macdValue, 'f', -1, 64) + " 🟢",
-			}
-		} else {
-			botMessage = models.BotMessage{
-				ChatId: int(chatID),
-				Text:   strconv.FormatFloat(macdValue, 'f', -1, 64) + " 🔴",
+				Text:   strconv.FormatFloat(macdValue, 'f', -1, 64),
 			}
 		}
+		//else {
+		//	botMessage = models.BotMessage{
+		//		ChatId: int(chatID),
+		//		Text:   strconv.FormatFloat(macdValue, 'f', -1, 64) + " 🔴",
+		//	}
+		//}
 		buf, err := json.Marshal(botMessage)
 		if err != nil {
 			log.Println("Ошибка при маршалинге сообщения:", err)

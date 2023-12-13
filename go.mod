@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/adshao/go-binance/v2 v2.4.5
-	github.com/d4l3k/talib v0.0.0-20180425021108-1b10e6a1ad95
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
 )
 
 require (
