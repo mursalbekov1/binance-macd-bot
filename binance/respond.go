@@ -21,6 +21,7 @@ var (
 	isRunning     = false
 	lastSign      = 0
 	prevMACDValue float64
+	isFirstRun    = true
 )
 
 func Respond(botUrl string, update models.Update) error {
@@ -29,19 +30,32 @@ func Respond(botUrl string, update models.Update) error {
 
 	switch update.Message.Text {
 	case "/start":
-		botMessage.Text = "Привет! Этот бот будет оповещать тебя, когда значение MACD изменится."
-	case "/macd":
+		botMessage.Text = "Привет! Этот бот предоставит уведомления о изменениях в значении MACD. Для активации введи команду /launch."
+	case "/launch":
 		if isRunning {
 			botMessage.Text = "MACD уже запущено."
 		} else {
 			botMessage.Text = "MACD запущено."
 			isRunning = true
+
+			if isFirstRun {
+				// Отправить сообщение с текущим состоянием MACD только при первом запуске
+				currentMACD := GetMACD(client, symbol, interval, limit)
+				if currentMACD > 0 {
+					botMessage.Text += " Сейчас значение MACD на зеленой отметке 🟢 " + strconv.FormatFloat(currentMACD, 'f', -1, 64)
+				} else {
+					botMessage.Text += " Сейчас значение MACD на красной отметке 🔴 " + strconv.FormatFloat(currentMACD, 'f', -1, 64)
+				}
+				isFirstRun = false
+			}
+
 			go GetMACDLoop(botUrl, int64(botMessage.ChatId)) // Запускаем GetMACD в отдельной горутине
 		}
 	case "/stop":
 		if isRunning {
-			botMessage.Text = "MACD остановлено."
 			isRunning = false
+			botMessage.Text = "MACD остановлено."
+			isFirstRun = false
 		} else {
 			botMessage.Text = "MACD уже остановлено."
 		}
@@ -91,6 +105,6 @@ func GetMACDLoop(botUrl string, chatID int64) {
 
 		prevMACDValue = macdValue
 
-		time.Sleep(time.Second) // Подождать 1 секунду перед следующей проверкой
+		time.Sleep(time.Second / 2) // Подождать 1 секунду перед следующей проверкой
 	}
 }
