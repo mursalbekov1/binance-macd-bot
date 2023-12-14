@@ -19,10 +19,15 @@ var (
 	interval      = "1s"
 	limit         = 100
 	isRunning     = false
-	lastSign      = 0
 	prevMACDValue float64
 	isFirstRun    = true
+	password      = "0214234"
+	isAuthorized  = false
 )
+
+func checkAuthorization() bool {
+	return isAuthorized
+}
 
 func Respond(botUrl string, update models.Update) error {
 	var botMessage models.BotMessage
@@ -30,8 +35,17 @@ func Respond(botUrl string, update models.Update) error {
 
 	switch update.Message.Text {
 	case "/start":
-		botMessage.Text = "Привет! Этот бот предоставит уведомления о изменениях в значении MACD. Для активации введи команду /launch."
+		if isAuthorized {
+			botMessage.Text = "Привет! Этот бот предоставит уведомления о изменениях в значении MACD. Для активации введите команду /launch."
+		} else {
+			botMessage.Text = "Привет! Этот бот предоставит уведомления о изменениях в значении MACD. Введите пароль, чтобы получить доступ к боту:"
+		}
 	case "/launch":
+		if !checkAuthorization() {
+			botMessage.Text = "🔐 Для использования бота сначала введите пароль."
+			break
+		}
+
 		if isRunning {
 			botMessage.Text = "MACD уже запущено."
 		} else {
@@ -39,7 +53,6 @@ func Respond(botUrl string, update models.Update) error {
 			isRunning = true
 
 			if isFirstRun {
-				// Отправить сообщение с текущим состоянием MACD только при первом запуске
 				currentMACD := GetMACD(client, symbol, interval, limit)
 				if currentMACD > 0 {
 					botMessage.Text += " Сейчас значение MACD на зеленой отметке 🟢 " + strconv.FormatFloat(currentMACD, 'f', -1, 64)
@@ -49,9 +62,14 @@ func Respond(botUrl string, update models.Update) error {
 				isFirstRun = false
 			}
 
-			go GetMACDLoop(botUrl, int64(botMessage.ChatId)) // Запускаем GetMACD в отдельной горутине
+			go GetMACDLoop(botUrl, int64(botMessage.ChatId))
 		}
 	case "/stop":
+		if !checkAuthorization() {
+			botMessage.Text = "🔐 Для использования бота сначала введите пароль."
+			break
+		}
+
 		if isRunning {
 			isRunning = false
 			botMessage.Text = "MACD остановлено."
@@ -60,7 +78,14 @@ func Respond(botUrl string, update models.Update) error {
 			botMessage.Text = "MACD уже остановлено."
 		}
 	default:
-		botMessage.Text = "Неизвестная команда"
+		if !checkAuthorization() && update.Message.Text == password {
+			isAuthorized = true
+			botMessage.Text = "✨ Пароль принят! Теперь у вас есть доступ к функциям бота. Для старта используйте команду /launch ✈️."
+		} else if !checkAuthorization() {
+			botMessage.Text = "🔒 Неверный пароль. Введите правильный пароль, чтобы открыть доступ к функциям бота."
+		} else {
+			botMessage.Text = "Неизвестная команда."
+		}
 	}
 
 	buf, err := json.Marshal(botMessage)
@@ -78,18 +103,17 @@ func GetMACDLoop(botUrl string, chatID int64) {
 	for isRunning {
 		macdValue := GetMACD(client, symbol, interval, limit)
 
-		// Проверяем, изменился ли знак MACD
 		if (macdValue > 0 && prevMACDValue <= 0) || (macdValue <= 0 && prevMACDValue > 0) {
 			var botMessage models.BotMessage
 			if macdValue > 0 {
 				botMessage = models.BotMessage{
 					ChatId: int(chatID),
-					Text:   "Значение macd поднялся на зеленый уровень 🟢 " + strconv.FormatFloat(macdValue, 'f', -1, 64),
+					Text:   "Значение MACD поднялось на зеленый уровень 🟢 " + strconv.FormatFloat(macdValue, 'f', -1, 64),
 				}
 			} else {
 				botMessage = models.BotMessage{
 					ChatId: int(chatID),
-					Text:   "Значение macd опустился на красный уровень 🔴 " + strconv.FormatFloat(macdValue, 'f', -1, 64),
+					Text:   "Значение MACD опустилось на красный уровень 🔴 " + strconv.FormatFloat(macdValue, 'f', -1, 64),
 				}
 			}
 			buf, err := json.Marshal(botMessage)
@@ -105,6 +129,6 @@ func GetMACDLoop(botUrl string, chatID int64) {
 
 		prevMACDValue = macdValue
 
-		time.Sleep(time.Second / 2) // Подождать 1 секунду перед следующей проверкой
+		time.Sleep(time.Second / 2)
 	}
 }
