@@ -16,12 +16,12 @@ var (
 	secretKey     = ""
 	client        = binance.NewClient(apiKey, secretKey)
 	symbol        = "BTCUSDT"
+	password      = "0214234"
 	interval      = "1s"
 	limit         = 100
 	isRunning     = false
 	prevMACDValue float64
 	isFirstRun    = true
-	password      = "0214234"
 	isAuthorized  = false
 )
 
