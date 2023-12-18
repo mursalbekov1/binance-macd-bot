@@ -25,7 +25,7 @@ var (
 	client     = binance.NewClient(apiKey, secretKey)
 	symbol     = "BTCUSDT"
 	password   = "0214234"
-	interval   = "1s"
+	interval   = "1h"
 	limit      = 100
 	userStates = make(map[int64]*UserState) // Хранение состояния для каждого пользователя
 	mu         sync.Mutex
@@ -93,7 +93,7 @@ func Respond(botUrl string, update models.Update) error {
 			break
 		}
 		if state.IsRunning {
-			botMessage.Text = "MACD Notifier уже запущен."
+			botMessage.Text = "MACD Notifier уже запущен. Сначала остановите текущий процесс командой /stop. После этого введите свою команду."
 		} else {
 			botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD. 🚀\n\n"
 			setRunning(int64(botMessage.ChatId), true)
@@ -117,7 +117,7 @@ func Respond(botUrl string, update models.Update) error {
 		}
 
 		if state.IsRunning {
-			botMessage.Text = "MACD Notifier уже запущен."
+			botMessage.Text = "MACD Notifier уже запущен. Сначала остановите текущий процесс командой /stop. После этого введите свою команду."
 		} else {
 			botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD когда он переходит с зеленой зоны на красную. 🚀\n\n"
 			setRunning(int64(botMessage.ChatId), true)
@@ -141,7 +141,7 @@ func Respond(botUrl string, update models.Update) error {
 		}
 
 		if state.IsRunning {
-			botMessage.Text = "MACD Notifier уже запущен."
+			botMessage.Text = "MACD Notifier уже запущен. Сначала остановите текущий процесс командой /stop. После этого введите свою команду."
 		} else {
 			botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD когда он переходит с красной зоны на зеленую. 🚀\n\n"
 			setRunning(int64(botMessage.ChatId), true)
@@ -228,7 +228,7 @@ func GetMACDLoop(botUrl string, chatID int64) {
 
 		setPrevMACDValue(chatID, macdValue)
 
-		time.Sleep(time.Second / 2)
+		time.Sleep(5 * time.Minute)
 	}
 }
 
@@ -259,7 +259,7 @@ func GetMACDLoopRed(botUrl string, chatID int64) {
 
 		setPrevMACDValue(chatID, macdValue)
 
-		time.Sleep(time.Second / 2)
+		time.Sleep(5 * time.Minute)
 	}
 }
 
@@ -290,6 +290,6 @@ func GetMACDLoopGreen(botUrl string, chatID int64) {
 
 		setPrevMACDValue(chatID, macdValue)
 
-		time.Sleep(time.Second / 2)
+		time.Sleep(5 * time.Minute)
 	}
 }

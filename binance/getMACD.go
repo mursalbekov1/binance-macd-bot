@@ -38,7 +38,7 @@ func GetMACD(client *binance.Client, symbol string, interval string, limit int) 
 		// Вычисляем MACD и сигнальную линию
 		macd, signalLine := CalculateMACD(prices, shortPeriod, longPeriod, signalPeriod)
 
-		time.Sleep(time.Second)
+		time.Sleep(time.Minute)
 		return macd[len(macd)-1] - signalLine[len(signalLine)-1]
 	}
 
