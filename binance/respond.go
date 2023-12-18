@@ -20,34 +20,30 @@ type UserState struct {
 }
 
 var (
-	apiKey     = ""
-	secretKey  = ""
-	client     = binance.NewClient(apiKey, secretKey)
-	symbol     = "BTCUSDT"
-	password   = "0214234"
-	interval   = "1h"
-	limit      = 100
-	userStates = make(map[int64]*UserState) // Хранение состояния для каждого пользователя
-	mu         sync.Mutex
+	apiKey         = ""
+	secretKey      = ""
+	client         = binance.NewClient(apiKey, secretKey)
+	symbol         = "BTCUSDT"
+	password       = "0214234"
+	interval       = "1h"
+	limit          = 100
+	userStates     = make(map[int64]*UserState)
+	mu             sync.Mutex
+	launchDataFile = "binance/chat.txt"
 )
 
-// Функция для получения состояния пользователя
 func getUserState(chatID int64) *UserState {
 	mu.Lock()
 	defer mu.Unlock()
 
 	state, ok := userStates[chatID]
 	if !ok {
-		// Создание нового состояния для нового пользователя
 		state = &UserState{IsFirstRun: true}
 		userStates[chatID] = state
 	}
 
 	return state
 }
-
-// Остальной код остается неизменным
-// ...
 
 func checkAuthorization(chatID int64) bool {
 	state := getUserState(chatID)
@@ -98,6 +94,11 @@ func Respond(botUrl string, update models.Update) error {
 			botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD. 🚀\n\n"
 			setRunning(int64(botMessage.ChatId), true)
 
+			err := saveLaunchDataToFile(int64(botMessage.ChatId), "/launch")
+			if err != nil {
+				log.Println("Ошибка при сохранении данных о запуске в файл:", err)
+			}
+
 			if state.IsFirstRun {
 				currentMACD := GetMACD(client, symbol, interval, limit)
 				if currentMACD > 0 {
@@ -130,6 +131,11 @@ func Respond(botUrl string, update models.Update) error {
 					botMessage.Text += "Сейчас значение MACD на зеленой отметке 🟢\n" + "Текущее значение: " + strconv.FormatFloat(currentMACD, 'f', -1, 64)
 				}
 				setFirstRun(int64(botMessage.ChatId), false)
+
+				err := saveLaunchDataToFile(int64(botMessage.ChatId), "/red")
+				if err != nil {
+					log.Println("Ошибка при сохранении данных о запуске в файл:", err)
+				}
 			}
 
 			go GetMACDLoopRed(botUrl, int64(botMessage.ChatId))
@@ -154,12 +160,21 @@ func Respond(botUrl string, update models.Update) error {
 					botMessage.Text += "Сейчас значение MACD на красной отметке 🔴\n" + "Текущее значение: " + strconv.FormatFloat(currentMACD, 'f', -1, 64)
 				}
 				setFirstRun(int64(botMessage.ChatId), false)
+
+				err := saveLaunchDataToFile(int64(botMessage.ChatId), "/green")
+				if err != nil {
+					log.Println("Ошибка при сохранении данных о запуске в файл:", err)
+				}
 			}
 
 			go GetMACDLoopGreen(botUrl, int64(botMessage.ChatId))
 		}
 	case "/stop":
 		if state.IsRunning {
+			err := removeActiveSession(int64(botMessage.ChatId))
+			if err != nil {
+				log.Println("Ошибка при удалении активного сеанса из файла:", err)
+			}
 			setRunning(int64(botMessage.ChatId), false)
 			botMessage.Text = "MACD Notifier остановлен."
 			setFirstRun(int64(botMessage.ChatId), true)
