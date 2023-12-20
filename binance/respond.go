@@ -7,7 +7,9 @@ import (
 	"github.com/adshao/go-binance/v2"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -25,12 +27,75 @@ var (
 	client         = binance.NewClient(apiKey, secretKey)
 	symbol         = "BTCUSDT"
 	password       = "0214234"
-	interval       = "1h"
+	interval       = "1s"
 	limit          = 100
 	userStates     = make(map[int64]*UserState)
 	mu             sync.Mutex
 	launchDataFile = "binance/chat.txt"
+	checkState     = true
 )
+
+func CheckState(botUrl string) {
+	fileInfo, err := os.Stat(launchDataFile)
+	if os.IsNotExist(err) || fileInfo.Size() == 0 {
+		checkState = false
+		log.Println("Launch data file is empty or does not exist.")
+		return
+	}
+
+	lines, err := ReadLines(launchDataFile)
+	if err != nil {
+		log.Fatal("Error reading launch data file:", err)
+		return
+	}
+
+	for _, line := range lines {
+
+		parts := strings.Fields(line)
+		if len(parts) != 2 {
+			log.Printf("Invalid line in launch data file: %s", line)
+			continue
+		}
+
+		chatID, err := strconv.ParseInt(parts[0], 10, 64)
+		if err != nil {
+			log.Printf("Invalid chatID in line: %s", line)
+			continue
+		}
+
+		command := parts[1]
+
+		if command != "" {
+			update := models.Update{
+				Message: models.Message{
+					Chat: models.Chat{
+						ChatId: int(chatID),
+					},
+					Text: command,
+				},
+			}
+			err := Respond(botUrl, update)
+			if err != nil {
+				return
+			}
+			updateUserStateAfterRespond(chatID)
+
+		}
+	}
+}
+
+func updateUserStateAfterRespond(chatID int64) *UserState {
+	mu.Lock()
+	defer mu.Unlock()
+
+	state, ok := userStates[chatID]
+	if !ok {
+		state = &UserState{IsFirstRun: false, IsRunning: false, IsAuthorized: true}
+		userStates[chatID] = state
+	}
+
+	return state
+}
 
 func getUserState(chatID int64) *UserState {
 	mu.Lock()
@@ -74,7 +139,13 @@ func Respond(botUrl string, update models.Update) error {
 	var botMessage models.BotMessage
 	botMessage.ChatId = update.Message.Chat.ChatId
 
-	state := getUserState(int64(botMessage.ChatId))
+	var state *UserState
+
+	if checkState {
+		state = updateUserStateAfterRespond(int64(botMessage.ChatId))
+	} else {
+		state = getUserState(int64(botMessage.ChatId))
+	}
 
 	switch update.Message.Text {
 	case "/start":
@@ -91,7 +162,9 @@ func Respond(botUrl string, update models.Update) error {
 		if state.IsRunning {
 			botMessage.Text = "MACD Notifier уже запущен. Сначала остановите текущий процесс командой /stop. После этого введите свою команду."
 		} else {
-			botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD. 🚀\n\n"
+			if !checkState {
+				botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD. 🚀\n\n"
+			}
 			setRunning(int64(botMessage.ChatId), true)
 
 			err := saveLaunchDataToFile(int64(botMessage.ChatId), "/launch")
@@ -120,7 +193,9 @@ func Respond(botUrl string, update models.Update) error {
 		if state.IsRunning {
 			botMessage.Text = "MACD Notifier уже запущен. Сначала остановите текущий процесс командой /stop. После этого введите свою команду."
 		} else {
-			botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD когда он переходит с зеленой зоны на красную. 🚀\n\n"
+			if !checkState {
+				botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD когда он переходит с зеленой зоны на красную. 🚀\n\n"
+			}
 			setRunning(int64(botMessage.ChatId), true)
 
 			if state.IsFirstRun {
@@ -149,7 +224,9 @@ func Respond(botUrl string, update models.Update) error {
 		if state.IsRunning {
 			botMessage.Text = "MACD Notifier уже запущен. Сначала остановите текущий процесс командой /stop. После этого введите свою команду."
 		} else {
-			botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD когда он переходит с красной зоны на зеленую. 🚀\n\n"
+			if !checkState {
+				botMessage.Text = "MACD Notifier запущен! 📈\n\nТеперь я буду уведомлять вас о изменениях в значении MACD когда он переходит с красной зоны на зеленую. 🚀\n\n"
+			}
 			setRunning(int64(botMessage.ChatId), true)
 
 			if state.IsFirstRun {
@@ -209,102 +286,4 @@ func Respond(botUrl string, update models.Update) error {
 		return err
 	}
 	return nil
-}
-
-func GetMACDLoop(botUrl string, chatID int64) {
-	state := getUserState(chatID)
-
-	for state.IsRunning {
-		macdValue := GetMACD(client, symbol, interval, limit)
-
-		if (macdValue > 0 && state.PrevMACDValue <= 0) || (macdValue <= 0 && state.PrevMACDValue > 0) {
-			var botMessage models.BotMessage
-			if macdValue > 0 {
-				botMessage = models.BotMessage{
-					ChatId: int(chatID),
-					Text:   "Значение MACD поднялось на зеленую отметку 🟢 \n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
-				}
-			} else {
-				botMessage = models.BotMessage{
-					ChatId: int(chatID),
-					Text:   "Значение MACD опустилось на красную отметку 🔴 \n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
-				}
-			}
-			buf, err := json.Marshal(botMessage)
-			if err != nil {
-				log.Println("Ошибка при маршалинге сообщения:", err)
-				continue
-			}
-			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
-			if err != nil {
-				log.Println("Ошибка при отправке сообщения:", err)
-			}
-		}
-
-		setPrevMACDValue(chatID, macdValue)
-
-		time.Sleep(time.Minute * 5)
-	}
-}
-
-func GetMACDLoopRed(botUrl string, chatID int64) {
-	state := getUserState(chatID)
-
-	for state.IsRunning {
-		macdValue := GetMACD(client, symbol, interval, limit)
-
-		if macdValue < 0 && state.PrevMACDValue > 0 {
-			var botMessage models.BotMessage
-
-			botMessage = models.BotMessage{
-				ChatId: int(chatID),
-				Text:   "Значение MACD опустилось на красную отметку 🔴\n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
-			}
-
-			buf, err := json.Marshal(botMessage)
-			if err != nil {
-				log.Println("Ошибка при маршалинге сообщения:", err)
-				continue
-			}
-			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
-			if err != nil {
-				log.Println("Ошибка при отправке сообщения:", err)
-			}
-		}
-
-		setPrevMACDValue(chatID, macdValue)
-
-		time.Sleep(time.Minute * 5)
-	}
-}
-
-func GetMACDLoopGreen(botUrl string, chatID int64) {
-	state := getUserState(chatID)
-
-	for state.IsRunning {
-		macdValue := GetMACD(client, symbol, interval, limit)
-
-		if macdValue > 0 && state.PrevMACDValue <= 0 {
-			var botMessage models.BotMessage
-
-			botMessage = models.BotMessage{
-				ChatId: int(chatID),
-				Text:   "Значение MACD поднялось на зеленую отметку 🟢\n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
-			}
-
-			buf, err := json.Marshal(botMessage)
-			if err != nil {
-				log.Println("Ошибка при маршалинге сообщения:", err)
-				continue
-			}
-			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
-			if err != nil {
-				log.Println("Ошибка при отправке сообщения:", err)
-			}
-		}
-
-		setPrevMACDValue(chatID, macdValue)
-
-		time.Sleep(time.Minute * 5)
-	}
 }

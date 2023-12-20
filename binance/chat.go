@@ -9,23 +9,40 @@ import (
 )
 
 func saveLaunchDataToFile(chatID int64, command string) error {
-	file, err := os.OpenFile(launchDataFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
+	file, err := os.OpenFile(launchDataFile, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	data := strconv.FormatInt(chatID, 10) + " " + command + "\n"
-	_, err = file.WriteString(data)
+	lines, err := ReadLines(launchDataFile)
 	if err != nil {
 		return err
 	}
 
+	found := false
+	for _, line := range lines {
+		parts := strings.Fields(line)
+		if len(parts) == 2 {
+			if id, err := strconv.ParseInt(parts[0], 10, 64); err == nil && id == chatID {
+				found = true
+				break
+			}
+		}
+	}
+
+	if !found {
+		data := strconv.FormatInt(chatID, 10) + " " + command + "\n"
+		_, err := file.WriteString(data)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
-
 func removeActiveSession(chatID int64) error {
-	lines, err := readLines(launchDataFile)
+	lines, err := ReadLines(launchDataFile)
 	if err != nil {
 		return err
 	}
@@ -57,7 +74,7 @@ func removeActiveSession(chatID int64) error {
 }
 
 // readLines читает строки из файла в срез строк
-func readLines(filename string) ([]string, error) {
+func ReadLines(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err

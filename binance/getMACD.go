@@ -1,10 +1,15 @@
 package binance
 
 import (
+	"binance_tg/models"
+	"bytes"
 	"context"
+	"encoding/json"
 	"github.com/adshao/go-binance/v2"
 	"log"
+	"net/http"
 	"strconv"
+	"time"
 )
 
 func GetMACD(client *binance.Client, symbol string, interval string, limit int) float64 {
@@ -74,4 +79,102 @@ func CalculateMACD(data []float64, shortPeriod, longPeriod, signalPeriod int) ([
 	signalLine := CalculateEMA(macd, signalPeriod)
 
 	return macd, signalLine
+}
+
+func GetMACDLoop(botUrl string, chatID int64) {
+	state := getUserState(chatID)
+
+	for state.IsRunning {
+		macdValue := GetMACD(client, symbol, interval, limit)
+
+		if (macdValue > 0 && state.PrevMACDValue <= 0) || (macdValue <= 0 && state.PrevMACDValue > 0) {
+			var botMessage models.BotMessage
+			if macdValue > 0 {
+				botMessage = models.BotMessage{
+					ChatId: int(chatID),
+					Text:   "Значение MACD поднялось на зеленую отметку 🟢 \n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
+				}
+			} else {
+				botMessage = models.BotMessage{
+					ChatId: int(chatID),
+					Text:   "Значение MACD опустилось на красную отметку 🔴 \n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
+				}
+			}
+			buf, err := json.Marshal(botMessage)
+			if err != nil {
+				log.Println("Ошибка при маршалинге сообщения:", err)
+				continue
+			}
+			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
+			if err != nil {
+				log.Println("Ошибка при отправке сообщения:", err)
+			}
+		}
+
+		setPrevMACDValue(chatID, macdValue)
+
+		time.Sleep(time.Second)
+	}
+}
+
+func GetMACDLoopRed(botUrl string, chatID int64) {
+	state := getUserState(chatID)
+
+	for state.IsRunning {
+		macdValue := GetMACD(client, symbol, interval, limit)
+
+		if macdValue < 0 && state.PrevMACDValue > 0 {
+			var botMessage models.BotMessage
+
+			botMessage = models.BotMessage{
+				ChatId: int(chatID),
+				Text:   "Значение MACD опустилось на красную отметку 🔴\n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
+			}
+
+			buf, err := json.Marshal(botMessage)
+			if err != nil {
+				log.Println("Ошибка при маршалинге сообщения:", err)
+				continue
+			}
+			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
+			if err != nil {
+				log.Println("Ошибка при отправке сообщения:", err)
+			}
+		}
+
+		setPrevMACDValue(chatID, macdValue)
+
+		time.Sleep(time.Second)
+	}
+}
+
+func GetMACDLoopGreen(botUrl string, chatID int64) {
+	state := getUserState(chatID)
+
+	for state.IsRunning {
+		macdValue := GetMACD(client, symbol, interval, limit)
+
+		if macdValue > 0 && state.PrevMACDValue <= 0 {
+			var botMessage models.BotMessage
+
+			botMessage = models.BotMessage{
+				ChatId: int(chatID),
+				Text:   "Значение MACD поднялось на зеленую отметку 🟢\n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
+			}
+
+			buf, err := json.Marshal(botMessage)
+			if err != nil {
+				log.Println("Ошибка при маршалинге сообщения:", err)
+				continue
+			}
+			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
+			if err != nil {
+				log.Println("Ошибка при отправке сообщения:", err)
+			}
+		}
+
+		setPrevMACDValue(chatID, macdValue)
+
+		time.Sleep(time.Second)
+	}
 }

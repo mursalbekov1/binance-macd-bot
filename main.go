@@ -13,11 +13,16 @@ func main() {
 	botApi := "https://api.telegram.org/bot"
 	botUrl := botApi + botToken
 	offset := 0
+	isRunning := false
 
 	for {
 		updates, err := binance2.GetUpdates(botUrl, offset)
 		if err != nil {
 			log.Println("Something went wrong: ", err.Error())
+		}
+		if !isRunning {
+			binance2.CheckState(botUrl)
+			isRunning = true
 		}
 		for _, update := range updates {
 			err = binance2.Respond(botUrl, update)
