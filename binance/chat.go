@@ -3,17 +3,37 @@ package binance
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func saveLaunchDataToFile(chatID int64, command string) error {
-	file, err := os.OpenFile(launchDataFile, os.O_RDWR|os.O_CREATE, 0644)
+func СheckIDInFile(chatID int64) bool {
+	mu.Lock()
+	defer mu.Unlock()
+
+	lines, err := ReadLines(launchDataFile)
 	if err != nil {
-		return err
+		log.Println("Ошибка при чтении файла:", err)
+		return false
 	}
-	defer file.Close()
+
+	for _, line := range lines {
+		parts := strings.Fields(line)
+		if len(parts) == 2 {
+			if id, err := strconv.ParseInt(parts[0], 10, 64); err == nil && id == chatID {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func saveLaunchDataToFile(chatID int64, command string) error {
+	mu.Lock()
+	defer mu.Unlock()
 
 	lines, err := ReadLines(launchDataFile)
 	if err != nil {
@@ -32,8 +52,10 @@ func saveLaunchDataToFile(chatID int64, command string) error {
 	}
 
 	if !found {
-		data := strconv.FormatInt(chatID, 10) + " " + command + "\n"
-		_, err := file.WriteString(data)
+		data := strconv.FormatInt(chatID, 10) + " " + command
+		lines = append(lines, data)
+
+		err := writeLines(lines, launchDataFile)
 		if err != nil {
 			return err
 		}
@@ -41,13 +63,17 @@ func saveLaunchDataToFile(chatID int64, command string) error {
 
 	return nil
 }
+
 func removeActiveSession(chatID int64) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Чтение текущего содержимого файла
 	lines, err := ReadLines(launchDataFile)
 	if err != nil {
 		return err
 	}
 
-	// Ищем индекс строки, соответствующей chatID
 	indexToRemove := -1
 	for i, line := range lines {
 		parts := strings.Fields(line)
@@ -59,21 +85,19 @@ func removeActiveSession(chatID int64) error {
 		}
 	}
 
-	// Если нашли строку, удаляем ее из среза
 	if indexToRemove != -1 {
 		lines = append(lines[:indexToRemove], lines[indexToRemove+1:]...)
-	}
 
-	// Записываем обновленные данные обратно в файл
-	err = writeLines(lines, launchDataFile)
-	if err != nil {
-		return err
+		// Запись обновленных данных в файл
+		err := writeLines(lines, launchDataFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-// readLines читает строки из файла в срез строк
 func ReadLines(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {

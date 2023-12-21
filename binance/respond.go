@@ -79,7 +79,6 @@ func CheckState(botUrl string) {
 				return
 			}
 			updateUserStateAfterRespond(chatID)
-
 		}
 	}
 }
@@ -141,7 +140,7 @@ func Respond(botUrl string, update models.Update) error {
 
 	var state *UserState
 
-	if checkState {
+	if СheckIDInFile(int64(botMessage.ChatId)) {
 		state = updateUserStateAfterRespond(int64(botMessage.ChatId))
 	} else {
 		state = getUserState(int64(botMessage.ChatId))

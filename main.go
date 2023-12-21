@@ -22,6 +22,7 @@ func main() {
 		}
 		if !isRunning {
 			binance2.CheckState(botUrl)
+			log.Println("проверено")
 			isRunning = true
 		}
 		for _, update := range updates {
