@@ -27,7 +27,7 @@ var (
 	client         = binance.NewClient(apiKey, secretKey)
 	symbol         = "BTCUSDT"
 	password       = "0214234"
-	interval       = "1s"
+	interval       = "1h"
 	limit          = 100
 	userStates     = make(map[int64]*UserState)
 	mu             sync.Mutex
@@ -38,7 +38,6 @@ var (
 func CheckState(botUrl string) {
 	fileInfo, err := os.Stat(launchDataFile)
 	if os.IsNotExist(err) || fileInfo.Size() == 0 {
-		checkState = false
 		log.Println("Launch data file is empty or does not exist.")
 		return
 	}
@@ -141,8 +140,10 @@ func Respond(botUrl string, update models.Update) error {
 	var state *UserState
 
 	if СheckIDInFile(int64(botMessage.ChatId)) {
+		checkState = true
 		state = updateUserStateAfterRespond(int64(botMessage.ChatId))
 	} else {
+		checkState = false
 		state = getUserState(int64(botMessage.ChatId))
 	}
 
@@ -264,7 +265,7 @@ func Respond(botUrl string, update models.Update) error {
 		if !checkAuthorization(int64(botMessage.ChatId)) && update.Message.Text == password {
 			setAuthorization(int64(botMessage.ChatId), true)
 			go func() {
-				time.Sleep(5 * time.Minute)
+				time.Sleep(10 * time.Minute)
 				setAuthorization(int64(botMessage.ChatId), false)
 				log.Println("Авторизация сброшена.")
 			}()

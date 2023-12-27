@@ -113,6 +113,7 @@ func GetMACDLoop(botUrl string, chatID int64) {
 
 		setPrevMACDValue(chatID, macdValue)
 
+		//time.Sleep(time.Minute * 10)
 		time.Sleep(time.Second)
 	}
 }
@@ -144,6 +145,7 @@ func GetMACDLoopRed(botUrl string, chatID int64) {
 
 		setPrevMACDValue(chatID, macdValue)
 
+		//time.Sleep(time.Minute * 10)
 		time.Sleep(time.Second)
 	}
 }
@@ -175,6 +177,7 @@ func GetMACDLoopGreen(botUrl string, chatID int64) {
 
 		setPrevMACDValue(chatID, macdValue)
 
+		//time.Sleep(time.Minute * 10)
 		time.Sleep(time.Second)
 	}
 }
