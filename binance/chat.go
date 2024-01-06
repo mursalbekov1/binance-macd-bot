@@ -3,7 +3,6 @@ package binance
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -15,7 +14,6 @@ func СheckIDInFile(chatID int64) bool {
 
 	lines, err := ReadLines(launchDataFile)
 	if err != nil {
-		log.Println("Ошибка при чтении файла:", err)
 		return false
 	}
 

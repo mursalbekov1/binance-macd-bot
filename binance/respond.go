@@ -1,9 +1,11 @@
 package binance
 
 import (
+	"binance_tg/logging"
 	"binance_tg/models"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/adshao/go-binance/v2"
 	"log"
 	"net/http"
@@ -35,7 +37,7 @@ var (
 	checkState     = true
 )
 
-func CheckState(botUrl string) {
+func CheckState(botUrl string, uid string) {
 	fileInfo, err := os.Stat(launchDataFile)
 	if os.IsNotExist(err) || fileInfo.Size() == 0 {
 		log.Println("Launch data file is empty or does not exist.")
@@ -73,7 +75,7 @@ func CheckState(botUrl string) {
 					Text: command,
 				},
 			}
-			err := Respond(botUrl, update)
+			err := Respond(botUrl, update, uid)
 			if err != nil {
 				return
 			}
@@ -133,18 +135,23 @@ func setFirstRun(chatID int64, isFirstRun bool) {
 	state.IsFirstRun = isFirstRun
 }
 
-func Respond(botUrl string, update models.Update) error {
+func Respond(botUrl string, update models.Update, uid string) error {
 	var botMessage models.BotMessage
 	botMessage.ChatId = update.Message.Chat.ChatId
+
+	logger, file := logging.CustomLog(`Respond `+`chatId=`+fmt.Sprint(botMessage.ChatId), uid)
+	defer file.Close()
 
 	var state *UserState
 
 	if СheckIDInFile(int64(botMessage.ChatId)) {
 		checkState = true
+		logger.Printf("checkState is True")
 		state = updateUserStateAfterRespond(int64(botMessage.ChatId))
 	} else {
 		checkState = false
 		state = getUserState(int64(botMessage.ChatId))
+		logger.Printf("checkState is False")
 	}
 
 	switch update.Message.Text {
@@ -154,6 +161,7 @@ func Respond(botUrl string, update models.Update) error {
 		} else {
 			botMessage.Text = "Привет! 🌟 Добро пожаловать в MACD Notifier Bot! 📈\n\nЭтот бот предоставит вам уведомления о изменениях в значении MACD на бирже Binance. 🚀\n\nВведите пароль, чтобы получить доступ к боту: 🔐"
 		}
+		logger.Println(`messaged ` + botMessage.Text)
 	case "/launch":
 		if !checkAuthorization(int64(botMessage.ChatId)) {
 			botMessage.Text = "Сначала введите пароль, чтобы получить доступ к боту: 🔐"
@@ -277,8 +285,11 @@ func Respond(botUrl string, update models.Update) error {
 		}
 	}
 
+	logger.Println(`messaged ` + botMessage.Text)
+
 	buf, err := json.Marshal(botMessage)
 	if err != nil {
+		logger.Println("error occured")
 		return err
 	}
 	_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))

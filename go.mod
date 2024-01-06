@@ -9,6 +9,7 @@ require (
 
 require (
 	github.com/bitly/go-simplejson v0.5.0 // indirect
+	github.com/google/uuid v1.5.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kr/text v0.2.0 // indirect
