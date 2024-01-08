@@ -1,6 +1,7 @@
 package binance
 
 import (
+	"binance_tg/logging"
 	"bufio"
 	"fmt"
 	"os"
@@ -41,7 +42,7 @@ func saveLaunchDataToFile(chatID int64, command string) error {
 	found := false
 	for _, line := range lines {
 		parts := strings.Fields(line)
-		if len(parts) == 2 {
+		if len(parts) == 3 {
 			if id, err := strconv.ParseInt(parts[0], 10, 64); err == nil && id == chatID {
 				found = true
 				break
@@ -50,7 +51,7 @@ func saveLaunchDataToFile(chatID int64, command string) error {
 	}
 
 	if !found {
-		data := strconv.FormatInt(chatID, 10) + " " + command
+		data := logging.CurrentDatetime() + strconv.FormatInt(chatID, 10) + " " + command
 		lines = append(lines, data)
 
 		err := writeLines(lines, launchDataFile)
@@ -75,7 +76,7 @@ func removeActiveSession(chatID int64) error {
 	indexToRemove := -1
 	for i, line := range lines {
 		parts := strings.Fields(line)
-		if len(parts) == 2 {
+		if len(parts) == 3 {
 			if id, err := strconv.ParseInt(parts[0], 10, 64); err == nil && id == chatID {
 				indexToRemove = i
 				break
