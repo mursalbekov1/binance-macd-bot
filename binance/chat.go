@@ -51,7 +51,7 @@ func saveLaunchDataToFile(chatID int64, command string) error {
 	}
 
 	if !found {
-		data := logging.CurrentDatetime() + strconv.FormatInt(chatID, 10) + " " + command
+		data := logging.CurrentDatetime() + " " + strconv.FormatInt(chatID, 10) + " " + command
 		lines = append(lines, data)
 
 		err := writeLines(lines, launchDataFile)
