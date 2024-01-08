@@ -1,10 +1,12 @@
 package binance
 
 import (
+	"binance_tg/logging"
 	"binance_tg/models"
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/adshao/go-binance/v2"
 	"log"
 	"net/http"
@@ -81,45 +83,56 @@ func CalculateMACD(data []float64, shortPeriod, longPeriod, signalPeriod int) ([
 	return macd, signalLine
 }
 
-func GetMACDLoop(botUrl string, chatID int64) {
+// GetMACDLoop Logging done
+func GetMACDLoop(botUrl string, chatID int64, uid string) {
 	state := getUserState(chatID)
+	logger, file := logging.CustomLog(`GetMACDLoop `+`chatId=`+fmt.Sprint(chatID), uid)
+	defer file.Close()
 
 	for state.IsRunning {
 		macdValue := GetMACD(client, symbol, interval, limit)
 
 		if (macdValue > 0 && state.PrevMACDValue <= 0) || (macdValue <= 0 && state.PrevMACDValue > 0) {
+			logger.Println("Flag processing true")
 			var botMessage models.BotMessage
 			if macdValue > 0 {
 				botMessage = models.BotMessage{
 					ChatId: int(chatID),
 					Text:   "Значение MACD поднялось на зеленую отметку 🟢 \n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
 				}
+				logger.Println("Green flag")
 			} else {
 				botMessage = models.BotMessage{
 					ChatId: int(chatID),
 					Text:   "Значение MACD опустилось на красную отметку 🔴 \n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
 				}
+				logger.Println("Red flag")
 			}
 			buf, err := json.Marshal(botMessage)
 			if err != nil {
-				log.Println("Ошибка при маршалинге сообщения:", err)
+				logger.Println("Ошибка при маршалинге сообщения:", err)
 				continue
 			}
 			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
 			if err != nil {
-				log.Println("Ошибка при отправке сообщения:", err)
+				logger.Println("Ошибка при отправке сообщения:", err)
 			}
+			logger.Println("Flag notified successfully")
 		}
 
 		setPrevMACDValue(chatID, macdValue)
+		logger.Println(`Previous MACD value set - value ` + fmt.Sprint(macdValue))
 
 		//time.Sleep(time.Minute * 10)
 		time.Sleep(time.Second)
 	}
 }
 
-func GetMACDLoopRed(botUrl string, chatID int64) {
+// GetMACDLoopRed logging done
+func GetMACDLoopRed(botUrl string, chatID int64, uid string) {
 	state := getUserState(chatID)
+	logger, file := logging.CustomLog(`GetMACDLoopRed `+`chatId=`+fmt.Sprint(chatID), uid)
+	defer file.Close()
 
 	for state.IsRunning {
 		macdValue := GetMACD(client, symbol, interval, limit)
@@ -131,27 +144,33 @@ func GetMACDLoopRed(botUrl string, chatID int64) {
 				ChatId: int(chatID),
 				Text:   "Значение MACD опустилось на красную отметку 🔴\n" + "Текущее значение: " + strconv.FormatFloat(macdValue, 'f', -1, 64),
 			}
+			logger.Println("Red Flag")
 
 			buf, err := json.Marshal(botMessage)
 			if err != nil {
-				log.Println("Ошибка при маршалинге сообщения:", err)
+				logger.Println("Ошибка при маршалинге сообщения:", err)
 				continue
 			}
 			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
 			if err != nil {
-				log.Println("Ошибка при отправке сообщения:", err)
+				logger.Println("Ошибка при отправке сообщения:", err)
 			}
+			logger.Println("Red Flag notified successfully")
 		}
 
 		setPrevMACDValue(chatID, macdValue)
+		logger.Println(`Previous MACD value set - value ` + fmt.Sprint(macdValue))
 
 		//time.Sleep(time.Minute * 10)
 		time.Sleep(time.Second)
 	}
 }
 
-func GetMACDLoopGreen(botUrl string, chatID int64) {
+// GetMACDLoopGreen logging done
+func GetMACDLoopGreen(botUrl string, chatID int64, uid string) {
 	state := getUserState(chatID)
+	logger, file := logging.CustomLog(`GetMACDLoopGreen `+`chatId=`+fmt.Sprint(chatID), uid)
+	defer file.Close()
 
 	for state.IsRunning {
 		macdValue := GetMACD(client, symbol, interval, limit)
@@ -166,16 +185,18 @@ func GetMACDLoopGreen(botUrl string, chatID int64) {
 
 			buf, err := json.Marshal(botMessage)
 			if err != nil {
-				log.Println("Ошибка при маршалинге сообщения:", err)
+				logger.Println("Ошибка при маршалинге сообщения:", err)
 				continue
 			}
 			_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
 			if err != nil {
-				log.Println("Ошибка при отправке сообщения:", err)
+				logger.Println("Ошибка при отправке сообщения:", err)
 			}
+			logger.Println("Green Flag notified successfully")
 		}
 
 		setPrevMACDValue(chatID, macdValue)
+		logger.Println(`Previous MACD value set - value ` + fmt.Sprint(macdValue))
 
 		//time.Sleep(time.Minute * 10)
 		time.Sleep(time.Second)

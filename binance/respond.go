@@ -161,7 +161,6 @@ func Respond(botUrl string, update models.Update, uid string) error {
 		} else {
 			botMessage.Text = "Привет! 🌟 Добро пожаловать в MACD Notifier Bot! 📈\n\nЭтот бот предоставит вам уведомления о изменениях в значении MACD на бирже Binance. 🚀\n\nВведите пароль, чтобы получить доступ к боту: 🔐"
 		}
-		logger.Println(`messaged ` + botMessage.Text)
 	case "/launch":
 		if !checkAuthorization(int64(botMessage.ChatId)) {
 			botMessage.Text = "Сначала введите пароль, чтобы получить доступ к боту: 🔐"
@@ -190,7 +189,7 @@ func Respond(botUrl string, update models.Update, uid string) error {
 				setFirstRun(int64(botMessage.ChatId), false)
 			}
 
-			go GetMACDLoop(botUrl, int64(botMessage.ChatId))
+			go GetMACDLoop(botUrl, int64(botMessage.ChatId), uid)
 		}
 	case "/red":
 		if !checkAuthorization(int64(botMessage.ChatId)) {
@@ -221,7 +220,7 @@ func Respond(botUrl string, update models.Update, uid string) error {
 				}
 			}
 
-			go GetMACDLoopRed(botUrl, int64(botMessage.ChatId))
+			go GetMACDLoopRed(botUrl, int64(botMessage.ChatId), uid)
 		}
 	case "/green":
 		if !checkAuthorization(int64(botMessage.ChatId)) {
@@ -252,7 +251,7 @@ func Respond(botUrl string, update models.Update, uid string) error {
 				}
 			}
 
-			go GetMACDLoopGreen(botUrl, int64(botMessage.ChatId))
+			go GetMACDLoopGreen(botUrl, int64(botMessage.ChatId), uid)
 		}
 	case "/stop":
 		if state.IsRunning {
@@ -285,16 +284,18 @@ func Respond(botUrl string, update models.Update, uid string) error {
 		}
 	}
 
-	logger.Println(`messaged ` + botMessage.Text)
-
 	buf, err := json.Marshal(botMessage)
 	if err != nil {
-		logger.Println("error occured")
+		logger.Println(`error occured - ` + fmt.Sprint(err))
 		return err
 	}
 	_, err = http.Post(botUrl+"/sendMessage", "application/json", bytes.NewBuffer(buf))
 	if err != nil {
+		logger.Println(`Message did not send, error - ` + fmt.Sprint(err) + `message:` + botMessage.Text)
 		return err
 	}
+
+	logger.Println(`messaged ` + botMessage.Text)
+
 	return nil
 }
