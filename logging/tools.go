@@ -22,7 +22,7 @@ func CustomLog(prefix string, uid string) (*log.Logger, *os.File) {
 }
 
 func InitLogFile() *os.File {
-	LOG_FILE := "/var/logs/binanceapp.log"
+	LOG_FILE := "/var/log/binanceapp.log"
 	logFile, err := os.OpenFile(LOG_FILE, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		log.Panicln(err)
