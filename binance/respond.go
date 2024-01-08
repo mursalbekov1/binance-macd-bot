@@ -53,12 +53,12 @@ func CheckState(botUrl string, uid string) {
 	for _, line := range lines {
 
 		parts := strings.Fields(line)
-		if len(parts) != 2 {
+		if len(parts) != 3 {
 			log.Printf("Invalid line in launch data file: %s", line)
 			continue
 		}
 
-		chatID, err := strconv.ParseInt(parts[0], 10, 64)
+		chatID, err := strconv.ParseInt(parts[1], 10, 64)
 		if err != nil {
 			log.Printf("Invalid chatID in line: %s", line)
 			continue

@@ -20,8 +20,8 @@ func СheckIDInFile(chatID int64) bool {
 
 	for _, line := range lines {
 		parts := strings.Fields(line)
-		if len(parts) == 2 {
-			if id, err := strconv.ParseInt(parts[0], 10, 64); err == nil && id == chatID {
+		if len(parts) == 3 {
+			if id, err := strconv.ParseInt(parts[1], 10, 64); err == nil && id == chatID {
 				return true
 			}
 		}
@@ -43,7 +43,7 @@ func saveLaunchDataToFile(chatID int64, command string) error {
 	for _, line := range lines {
 		parts := strings.Fields(line)
 		if len(parts) == 3 {
-			if id, err := strconv.ParseInt(parts[0], 10, 64); err == nil && id == chatID {
+			if id, err := strconv.ParseInt(parts[1], 10, 64); err == nil && id == chatID {
 				found = true
 				break
 			}
@@ -77,7 +77,7 @@ func removeActiveSession(chatID int64) error {
 	for i, line := range lines {
 		parts := strings.Fields(line)
 		if len(parts) == 3 {
-			if id, err := strconv.ParseInt(parts[0], 10, 64); err == nil && id == chatID {
+			if id, err := strconv.ParseInt(parts[1], 10, 64); err == nil && id == chatID {
 				indexToRemove = i
 				break
 			}
