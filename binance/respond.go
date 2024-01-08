@@ -139,7 +139,7 @@ func Respond(botUrl string, update models.Update, uid string) error {
 	var botMessage models.BotMessage
 	botMessage.ChatId = update.Message.Chat.ChatId
 
-	logger, file := logging.CustomLog(`Respond `+`chatId=`+fmt.Sprint(botMessage.ChatId), uid)
+	logger, file := logging.CustomLog(`chatId=`+fmt.Sprint(botMessage.ChatId), uid)
 	defer file.Close()
 
 	var state *UserState

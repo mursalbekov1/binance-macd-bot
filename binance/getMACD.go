@@ -86,7 +86,7 @@ func CalculateMACD(data []float64, shortPeriod, longPeriod, signalPeriod int) ([
 // GetMACDLoop Logging done
 func GetMACDLoop(botUrl string, chatID int64, uid string) {
 	state := getUserState(chatID)
-	logger, file := logging.CustomLog(`GetMACDLoop `+`chatId=`+fmt.Sprint(chatID), uid)
+	logger, file := logging.CustomLog(`chatId=`+fmt.Sprint(chatID), uid)
 	defer file.Close()
 
 	for state.IsRunning {
@@ -131,7 +131,7 @@ func GetMACDLoop(botUrl string, chatID int64, uid string) {
 // GetMACDLoopRed logging done
 func GetMACDLoopRed(botUrl string, chatID int64, uid string) {
 	state := getUserState(chatID)
-	logger, file := logging.CustomLog(`GetMACDLoopRed `+`chatId=`+fmt.Sprint(chatID), uid)
+	logger, file := logging.CustomLog(`chatId=`+fmt.Sprint(chatID), uid)
 	defer file.Close()
 
 	for state.IsRunning {
@@ -169,7 +169,7 @@ func GetMACDLoopRed(botUrl string, chatID int64, uid string) {
 // GetMACDLoopGreen logging done
 func GetMACDLoopGreen(botUrl string, chatID int64, uid string) {
 	state := getUserState(chatID)
-	logger, file := logging.CustomLog(`GetMACDLoopGreen `+`chatId=`+fmt.Sprint(chatID), uid)
+	logger, file := logging.CustomLog(`chatId=`+fmt.Sprint(chatID), uid)
 	defer file.Close()
 
 	for state.IsRunning {

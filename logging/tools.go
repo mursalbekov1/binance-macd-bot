@@ -1,14 +1,22 @@
 package logging
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"log"
 	"os"
+	"time"
+)
+
+const (
+	YYYYMMDD  = "2006-01-02"
+	HHMMSS24h = "15:04:05"
 )
 
 func CustomLog(prefix string, uid string) (*log.Logger, *os.File) {
+	datetime := time.Now().Format(YYYYMMDD+" "+HHMMSS24h) + ": "
 	logFile := InitLogFile()
-	logger := log.New(logFile, prefix+`,uid `+uid+`:`, log.Lshortfile)
+	logger := log.New(logFile, fmt.Sprint(datetime)+` `+prefix+` uid `+uid+`:`, log.Lshortfile)
 
 	return logger, logFile
 }

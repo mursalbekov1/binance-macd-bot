@@ -13,7 +13,7 @@ func main() {
 	isRunning := false
 
 	uid := logging.GenerateString(32)
-	logger, file := logging.CustomLog("main", uid)
+	logger, file := logging.CustomLog("", uid)
 	defer file.Close()
 
 	for {
