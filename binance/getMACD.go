@@ -169,10 +169,9 @@ func GetMACDLoopRed(botUrl string, chatID int64, uid string) {
 // GetMACDLoopGreen logging done
 func GetMACDLoopGreen(botUrl string, chatID int64, uid string) {
 	state := getUserState(chatID)
-	logger, file := logging.CustomLog(`chatId=`+fmt.Sprint(chatID), uid)
-	defer file.Close()
 
 	for state.IsRunning {
+		logger, file := logging.CustomLog(`chatId=`+fmt.Sprint(chatID), uid)
 		macdValue := GetMACD(client, symbol, interval, limit)
 
 		if macdValue > 0 && state.PrevMACDValue <= 0 {
@@ -200,5 +199,6 @@ func GetMACDLoopGreen(botUrl string, chatID int64, uid string) {
 
 		//time.Sleep(time.Minute * 10)
 		time.Sleep(time.Second)
+		file.Close()
 	}
 }
