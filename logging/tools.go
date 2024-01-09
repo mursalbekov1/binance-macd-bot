@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -24,11 +25,19 @@ func CustomLog(prefix string, uid string) (*log.Logger, *os.File) {
 }
 
 func InitLogFile() *os.File {
-	LOG_FILE := "/var/log/binanceapp.log"
-	logFile, err := os.OpenFile(LOG_FILE, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+	executablePath, err := os.Executable()
 	if err != nil {
 		log.Panicln(err)
 	}
+
+	logFileName := "binanceapp.log"
+	logFilePath := filepath.Join(filepath.Dir(executablePath), logFileName)
+
+	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		log.Panicln(err)
+	}
+
 	return logFile
 }
 
