@@ -64,7 +64,7 @@ func CheckState(botUrl string, uid string) {
 			continue
 		}
 
-		command := parts[1]
+		command := parts[2]
 
 		if command != "" {
 			update := models.Update{
