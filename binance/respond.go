@@ -21,7 +21,7 @@ type UserState struct {
 	PrevMACDValue float64
 	IsFirstRun    bool
 	IsAuthorized  bool
-	TimeTrue      *bool
+	TrueTime      bool
 }
 
 var (
@@ -190,7 +190,7 @@ func Respond(botUrl string, update models.Update, uid string) error {
 				setFirstRun(int64(botMessage.ChatId), false)
 			}
 
-			go GetMACDLoop(botUrl, int64(botMessage.ChatId), uid, *state.TimeTrue)
+			go GetMACDLoop(botUrl, int64(botMessage.ChatId), uid, state.TrueTime)
 		}
 	//case "/red":
 	//	if !checkAuthorization(int64(botMessage.ChatId)) {
@@ -252,7 +252,7 @@ func Respond(botUrl string, update models.Update, uid string) error {
 				}
 			}
 
-			go GetMACDLoopGreen(botUrl, int64(botMessage.ChatId), uid, *state.TimeTrue)
+			go GetMACDLoopGreen(botUrl, int64(botMessage.ChatId), uid, state.TrueTime)
 		}
 	case "/stop":
 		if state.IsRunning {
@@ -262,7 +262,7 @@ func Respond(botUrl string, update models.Update, uid string) error {
 			}
 			setRunning(int64(botMessage.ChatId), false)
 			botMessage.Text = "MACD Notifier остановлен."
-			*state.TimeTrue = false
+			state.TrueTime = false
 			setFirstRun(int64(botMessage.ChatId), true)
 		} else if !checkAuthorization(int64(botMessage.ChatId)) {
 			botMessage.Text = "Сначала введите пароль, чтобы получить доступ к боту: 🔐"
