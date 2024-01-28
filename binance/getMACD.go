@@ -123,7 +123,7 @@ func GetMACDLoop(botUrl string, chatID int64, uid string) {
 		setPrevMACDValue(chatID, macdValue)
 		logger.Println(`Previous MACD value set - value ` + fmt.Sprint(macdValue))
 
-		time.Sleep(time.Minute * 10)
+		time.Sleep(time.Minute * 30)
 	}
 }
 
@@ -195,7 +195,7 @@ func GetMACDLoopGreen(botUrl string, chatID int64, uid string) {
 		setPrevMACDValue(chatID, macdValue)
 		logger.Println(`Previous MACD value set - value ` + fmt.Sprint(macdValue))
 
-		time.Sleep(time.Minute * 10)
+		time.Sleep(time.Minute * 30)
 		file.Close()
 	}
 }
