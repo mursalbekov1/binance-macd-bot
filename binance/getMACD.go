@@ -84,7 +84,7 @@ func CalculateMACD(data []float64, shortPeriod, longPeriod, signalPeriod int) ([
 }
 
 // GetMACDLoop Logging done
-func GetMACDLoop(botUrl string, chatID int64, uid string) {
+func GetMACDLoop(botUrl string, chatID int64, uid string, trueTime bool) {
 	state := getUserState(chatID)
 	logger, file := logging.CustomLog(`chatId=`+fmt.Sprint(chatID), uid)
 	defer file.Close()
@@ -123,7 +123,20 @@ func GetMACDLoop(botUrl string, chatID int64, uid string) {
 		setPrevMACDValue(chatID, macdValue)
 		logger.Println(`Previous MACD value set - value ` + fmt.Sprint(macdValue))
 
-		time.Sleep(time.Minute * 30)
+		log.Println(trueTime)
+
+		if !trueTime {
+			now := time.Now()
+
+			nextHour := now.Add(time.Hour)
+			nextHour = time.Date(nextHour.Year(), nextHour.Month(), nextHour.Day(), nextHour.Hour(), 0, 0, 0, nextHour.Location())
+			sleepDuration := nextHour.Sub(now)
+
+			time.Sleep(sleepDuration)
+			trueTime = true
+		} else {
+			time.Sleep(time.Minute * 30)
+		}
 	}
 }
 
@@ -165,11 +178,11 @@ func GetMACDLoop(botUrl string, chatID int64, uid string) {
 //}
 
 // GetMACDLoopGreen logging done
-func GetMACDLoopGreen(botUrl string, chatID int64, uid string) {
+func GetMACDLoopGreen(botUrl string, chatID int64, uid string, trueTime bool) {
 	state := getUserState(chatID)
 
 	for state.IsRunning {
-		logger, file := logging.CustomLog(`chatId=`+fmt.Sprint(chatID), uid)
+		logger, _ := logging.CustomLog(`chatId=`+fmt.Sprint(chatID), uid)
 		macdValue := GetMACD(client, symbol, interval, limit)
 
 		if macdValue > 0 && state.PrevMACDValue <= 0 {
@@ -195,7 +208,17 @@ func GetMACDLoopGreen(botUrl string, chatID int64, uid string) {
 		setPrevMACDValue(chatID, macdValue)
 		logger.Println(`Previous MACD value set - value ` + fmt.Sprint(macdValue))
 
-		time.Sleep(time.Minute * 30)
-		file.Close()
+		if !trueTime {
+			now := time.Now()
+
+			nextHour := now.Add(time.Hour)
+			nextHour = time.Date(nextHour.Year(), nextHour.Month(), nextHour.Day(), nextHour.Hour(), 0, 0, 0, nextHour.Location())
+			sleepDuration := nextHour.Sub(now)
+
+			time.Sleep(sleepDuration)
+			trueTime = true
+		} else {
+			time.Sleep(time.Minute * 30)
+		}
 	}
 }
