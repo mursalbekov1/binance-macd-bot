@@ -98,7 +98,7 @@ func removeActiveSession(chatID int64) error {
 }
 
 func ReadLines(filename string) ([]string, error) {
-	file, err := os.OpenFile(filename, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
+	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
