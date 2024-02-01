@@ -135,7 +135,7 @@ func GetMACDLoop(botUrl string, chatID int64, uid string, trueTime bool) {
 			time.Sleep(sleepDuration)
 			trueTime = true
 		} else {
-			time.Sleep(time.Minute * 30)
+			time.Sleep(time.Hour)
 		}
 	}
 }
@@ -218,7 +218,7 @@ func GetMACDLoopGreen(botUrl string, chatID int64, uid string, trueTime bool) {
 			time.Sleep(sleepDuration)
 			trueTime = true
 		} else {
-			time.Sleep(time.Minute * 30)
+			time.Sleep(time.Hour)
 		}
 	}
 }
